@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1023851529255",
+    "project_id": "blogg-app-4de16",
+    "storage_bucket": "blogg-app-4de16.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023851529255:android:9044f6030de8b56424ba02",
+        "android_client_info": {
+          "package_name": "com.example.blogg_apps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxKPDHy2QTa19WYsqjQq8a0r-oDKwbJ94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
