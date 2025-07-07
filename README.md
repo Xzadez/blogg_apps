@@ -11,6 +11,13 @@ git clone https://github.com/Xzadez/blogg_apps.git
 ## Installation
 1. Clone this repository:
 ```
-bash
 git clone https://github.com/yourusername/MyAwesomeFlutterApp.git
+```
+2. Install dependencies:
+```
+flutter pub get
+```
+3. Run the app:
+```
+flutter run
 ```
