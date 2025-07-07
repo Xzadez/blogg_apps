@@ -1,11 +1,9 @@
 # blogg_apps
-## Overview
-1. Logo App
-   ![image](https://github.com/user-attachments/assets/925ba56a-968f-4236-9289-272627d9d37d)
-2. ![image](https://github.com/user-attachments/assets/4c3999c9-4b99-4080-ac14-1b34429cb99d)
-3. Home
-   ![image](https://github.com/user-attachments/assets/032566ce-17ad-4fc5-9fa7-832e59049e26)
-4. ![image](https://github.com/user-attachments/assets/f1503fd2-3cc5-47c2-b5f6-47001d3ce2d2)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f5b94f3c-14fb-46ac-9e8f-3beac6449543" width="250"/>
+  <img src="https://github.com/user-attachments/assets/48c6f424-af60-4ac9-936d-019d325a66df" width="250"/>
+  <img src="https://github.com/user-attachments/assets/634a00f7-c448-4477-9f53-881363c5d23d" width="250"/>
+</p>
 
 ## ✨ Features
 
