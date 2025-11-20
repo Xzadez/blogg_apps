@@ -51,7 +51,6 @@ class HomePage extends GetView<HomePageController> {
               ],
             );
           }
-          // Tampilkan konten untuk koneksi online
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

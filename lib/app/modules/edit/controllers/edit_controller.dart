@@ -1,106 +1,96 @@
-import 'dart:convert';
-import 'dart:io';
+// edit_controller.dart (VERSI FINAL YANG BENAR)
 
-import 'package:blogg_apps/app/data/controller/connection.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+import 'package:blogg_apps/app/data/modals/article.dart';
+import 'package:blogg_apps/app/modules/bookmarks/controllers/bookmarks_controller.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../data/controller/connection.dart';
 import '../../../data/controller/post_controller.dart';
 
 class EditController extends GetxController {
-  final PostController postController = PostController();
+  final PostController postController = Get.find<PostController>();
   final ConnectionController connectionController =
-      Get.put(ConnectionController());
+      Get.find<ConnectionController>();
+
+  final supabase = Supabase.instance.client;
 
   final ImagePicker _picker = ImagePicker();
   Rx<XFile?> selectedImage = Rx<XFile?>(null);
+  late Article article;
+  late TextEditingController headerController;
+  late TextEditingController contentController;
 
-  Future<void> openCameraImg() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      selectedImage.value = image;
-    }
-  }
-
-  Future<void> updateArticle(
-      String articleId, String header, String content) async {
-    var imageName = DateTime.now().millisecondsSinceEpoch.toString();
-    var storageRef =
-        FirebaseStorage.instance.ref().child('contentImg/$imageName.jpg');
-    try {
-      if (connectionController.isOnline.value) {
-        var uploadTask = storageRef.putFile(File(selectedImage.value!.path));
-        var downloadUrl = await (await uploadTask).ref.getDownloadURL();
-        postController.updatePost(articleId, header, content, downloadUrl);
-        Get.snackbar('Success', 'Berhasil menambahkan gambar');
-      } else {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        String pendingData = jsonEncode({
-          'articleId': articleId,
-          'header': header,
-          'content': content,
-          'imagePath': selectedImage.value!.path,
-        });
-
-        await prefs.setString('pendingUpdate', pendingData);
-        Get.snackbar(
-            'Offline', 'Tidak ada koneksi internet, data disimpan sementara.');
-        Get.offNamed('home');
-      }
-    } catch (e) {
-      Get.snackbar("Error", "No image selected for upload.");
-    }
-  }
-
-  Future<void> syncPendingData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? pendingData = prefs.getString('pendingUpdate');
-
-    if (pendingData != null) {
-      if (connectionController.isOnline.value) {
-        var data = jsonDecode(pendingData);
-        var storageRef = FirebaseStorage.instance
-            .ref()
-            .child('contentImg/${DateTime.now().millisecondsSinceEpoch}.jpg');
-
-        try {
-          // Upload gambar dari path yang tersimpan
-          var uploadTask = storageRef.putFile(File(data['imagePath']));
-          var downloadUrl = await (await uploadTask).ref.getDownloadURL();
-
-          // Panggil updatePost controller dengan data pending
-          postController.updatePost(
-            data['articleId'],
-            data['header'],
-            data['content'],
-            downloadUrl,
-          );
-
-          // Hapus data pending dari SharedPreferences
-          await prefs.remove('pendingUpdate');
-          Get.snackbar('Success', 'Data tersimpan ke server.');
-        } catch (e) {
-          Get.snackbar("Error", "Gagal menyinkronkan data: $e");
-        }
-      }
-    }
-  }
-
-  final count = 0.obs;
   @override
   void onInit() {
     super.onInit();
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
+    article = Get.arguments;
+    headerController = TextEditingController(text: article.header);
+    contentController = TextEditingController(text: article.content);
   }
 
   @override
   void onClose() {
+    clearAll();
     super.onClose();
+  }
+
+  void _refreshLists() {
+    postController.fetchAllArticles();
+    try {
+      Get.find<BookmarksController>().fetchArticlesByAuthor();
+    } catch (e) {}
+  }
+
+  Future<void> openCameraImg() async {
+    final image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) selectedImage.value = image;
+  }
+
+  Future<void> updateArticle() async {
+    Get.dialog(const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false);
+
+    try {
+      String imageUrlToUpdate = article.imgUrl;
+      if (selectedImage.value != null) {
+        final imageFile = File(selectedImage.value!.path);
+        final imageName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+        const bucketName = 'imgContent';
+
+        await supabase.storage.from(bucketName).upload(
+              imageName,
+              imageFile,
+              fileOptions:
+                  const FileOptions(cacheControl: '3600', upsert: false),
+            );
+
+        imageUrlToUpdate =
+            supabase.storage.from(bucketName).getPublicUrl(imageName);
+      }
+
+      await postController.updatePost(
+        article.articleId,
+        headerController.text,
+        contentController.text,
+        imageUrlToUpdate,
+      );
+
+      Get.back();
+      _refreshLists();
+      Get.snackbar('Success', 'Artikel berhasil diperbarui');
+      Get.offNamed('home');
+    } catch (e) {
+      Get.back();
+      Get.snackbar("Error", "Gagal memperbarui artikel: ${e.toString()}");
+    }
+  }
+
+  void clearAll() {
+    headerController.dispose();
+    contentController.dispose();
+    selectedImage.value = null;
   }
 }

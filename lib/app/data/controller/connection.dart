@@ -17,7 +17,6 @@ class ConnectionController extends GetxController {
     });
   }
 
-  // Monitor koneksi internet
   void _updateConnectionStatus(ConnectivityResult connectivityResult) {
     if (connectivityResult == ConnectivityResult.none) {
       isOnline.value = false;

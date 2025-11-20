@@ -1,22 +1,31 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:blogg_apps/app/data/controller/connection.dart';
 import 'package:blogg_apps/app/data/controller/post_controller.dart';
 import 'package:blogg_apps/app/modules/add/controllers/add_controller.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../edit/controllers/edit_controller.dart';
 
 class HomePageController extends GetxController {
   final PostController postController = Get.put(PostController());
-  final EditController _editController = Get.put(EditController());
+  final ConnectionController connectionController =
+      Get.find<ConnectionController>();
+
+  final supabase = Supabase.instance.client;
+
   final AddController _addController = Get.put(AddController());
   var isLoading = true.obs;
   var imageUrls = <String>[].obs;
 
   @override
   void onInit() {
-    _editController.syncPendingData();
+    syncPendingData();
 
-    Future.delayed(Duration(seconds: 5), () {
-      // Setelah delay, set loading ke false dan load data
+    Future.delayed(const Duration(seconds: 5), () {
       isLoading.value = false;
       super.onInit();
     });
@@ -30,6 +39,45 @@ class HomePageController extends GetxController {
   @override
   void onClose() {
     super.onClose();
+  }
+
+  Future<void> syncPendingData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? pendingData = prefs.getString('pendingUpdate');
+
+    if (pendingData != null) {
+      if (connectionController.isOnline.value) {
+        var data = jsonDecode(pendingData);
+
+        try {
+          final imageFile = File(data['imagePath']);
+          final imageName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+          const bucketName = 'imgContent';
+
+          await supabase.storage.from(bucketName).upload(
+                imageName,
+                imageFile,
+                fileOptions:
+                    const FileOptions(cacheControl: '3600', upsert: false),
+              );
+
+          final String downloadUrl =
+              supabase.storage.from(bucketName).getPublicUrl(imageName);
+
+          postController.updatePost(
+            data['articleId'],
+            data['header'],
+            data['content'],
+            downloadUrl,
+          );
+
+          await prefs.remove('pendingUpdate');
+          Get.snackbar('Success', 'Data offline berhasil disinkronkan.');
+        } catch (e) {
+          Get.snackbar("Error", "Gagal menyinkronkan data: $e");
+        }
+      }
+    }
   }
 
   void fetchImages() {

@@ -8,16 +8,10 @@ import 'package:get/get.dart';
 import '../controllers/edit_controller.dart';
 
 class EditView extends GetView<EditController> {
-  EditView(this.article, {super.key});
-  final EditController _editController = EditController();
-
-  final Article article;
+  EditView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final headerController = TextEditingController(text: article.header);
-    final contentController = TextEditingController(text: article.content);
-
     final size = MediaQuery.of(context).size;
     final width = size.width;
     return Scaffold(
@@ -25,7 +19,7 @@ class EditView extends GetView<EditController> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(
-          article.title,
+          controller.article.title,
           style: const TextStyle(
             fontFamily: 'Telegraf',
           ),
@@ -33,17 +27,12 @@ class EditView extends GetView<EditController> {
         actions: [
           GestureDetector(
             onTap: () async {
-              _editController.updateArticle(
-                article.articleId,
-                headerController.text,
-                contentController.text,
-              );
-              // FirebaseMessaging.instance.subscribeToTopic(title);
+              controller.updateArticle();
             },
             child: const Padding(
               padding: EdgeInsets.only(right: 30.0),
               child: Text(
-                "Edit",
+                "Save",
                 style: TextStyle(
                   fontFamily: 'Telegraf',
                   fontSize: 17,
@@ -64,7 +53,7 @@ class EditView extends GetView<EditController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
-                controller: headerController,
+                controller: controller.headerController,
                 textCapitalization: TextCapitalization.sentences,
                 style: const TextStyle(
                   fontSize: 20,
@@ -89,7 +78,7 @@ class EditView extends GetView<EditController> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  article.tag,
+                  controller.article.tag,
                   style: const TextStyle(
                     fontFamily: 'Telegraf',
                     fontWeight: FontWeight.bold,
@@ -100,9 +89,9 @@ class EditView extends GetView<EditController> {
               ),
               const SizedBox(height: 30),
               GestureDetector(onTap: () {
-                _editController.openCameraImg();
+                controller.openCameraImg();
               }, child: Obx(() {
-                if (_editController.selectedImage.value != null) {
+                if (controller.selectedImage.value != null) {
                   return Container(
                     padding: const EdgeInsets.all(14),
                     width: double.infinity,
@@ -114,7 +103,7 @@ class EditView extends GetView<EditController> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.file(
-                        File(_editController.selectedImage.value!.path),
+                        File(controller.selectedImage.value!.path),
                         width: double.infinity,
                         height: 200,
                         fit: BoxFit.cover,
@@ -133,7 +122,7 @@ class EditView extends GetView<EditController> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.network(
-                        article.imgUrl,
+                        controller.article.imgUrl,
                         width: double.infinity,
                         height: 200,
                         fit: BoxFit.cover,
@@ -144,7 +133,7 @@ class EditView extends GetView<EditController> {
               })),
               const SizedBox(height: 30),
               TextField(
-                controller: contentController,
+                controller: controller.contentController,
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 20,
                 style: const TextStyle(

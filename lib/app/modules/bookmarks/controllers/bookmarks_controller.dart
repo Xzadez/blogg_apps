@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookmarksController extends GetxController {
+  final SharedPreferences _prefs = Get.find<SharedPreferences>();
   var articles = <Article>[].obs;
   final PostController _postController = Get.put(PostController());
   var isLoading = false.obs;
@@ -12,6 +13,7 @@ class BookmarksController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    fetchArticlesByAuthor();
   }
 
   @override
@@ -42,8 +44,13 @@ class BookmarksController extends GetxController {
     return null;
   }
 
-  Future<void> fetchArticlesByAuthor(String authorName) async {
-    articles.value = await _postController.getArticlesByAuthor(authorName);
+  Future<void> fetchArticlesByAuthor() async {
+    final username = _prefs.getString('username');
+    if (username != null && username.isNotEmpty) {
+      isLoading.value = true;
+      articles.value = await _postController.getArticlesByAuthor(username);
+      isLoading.value = false;
+    }
   }
 
   Future<void> deleteArticle(String documentId) async {

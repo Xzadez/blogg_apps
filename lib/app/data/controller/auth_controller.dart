@@ -22,8 +22,9 @@ class AuthController extends GetxController {
       isLoading.value = true;
 
       if (await _userController.checkUsernameExists(username)) {
-        Get.snackbar('Error', 'Username already exists',
+        Get.snackbar('Error', 'Username sudah digunakan',
             backgroundColor: Colors.red);
+        isLoading.value = false;
         return;
       }
 
@@ -36,11 +37,22 @@ class AuthController extends GetxController {
       await _userController.saveUserData(
           userCredential.user!.uid, email, username);
 
-      Get.snackbar('Success', 'Registration successful',
+      Get.snackbar('Berhasil', 'Registrasi berhasil',
           backgroundColor: Colors.green);
       Get.offNamed('sign-in');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'weak-password') {
+        Get.snackbar('Error', 'Password minimal 6 karakter',
+            backgroundColor: Colors.red);
+      } else if (e.code == 'email-already-in-use') {
+        Get.snackbar('Error', 'Email sudah terdaftar',
+            backgroundColor: Colors.red);
+      } else {
+        Get.snackbar('Error', 'Registrasi Gagal: ${e.message}',
+            backgroundColor: Colors.red);
+      }
     } catch (error) {
-      Get.snackbar('Error', 'Registration failed: Coba cek lagi',
+      Get.snackbar('Error', 'Terjadi kesalahan, silakan coba lagi',
           backgroundColor: Colors.red);
     } finally {
       isLoading.value = false;

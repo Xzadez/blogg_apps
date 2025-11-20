@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1023851529255",
-    "project_id": "blogg-app-4de16",
-    "storage_bucket": "blogg-app-4de16.appspot.com"
+    "project_number": "801724453027",
+    "project_id": "blogg-app-e7ed8",
+    "storage_bucket": "blogg-app-e7ed8.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1023851529255:android:9044f6030de8b56424ba02",
+        "mobilesdk_app_id": "1:801724453027:android:3c0f2ff40cfd867cda2f16",
         "android_client_info": {
           "package_name": "com.example.blogg_apps"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDxKPDHy2QTa19WYsqjQq8a0r-oDKwbJ94"
+          "current_key": "AIzaSyBvaOkzakeeVlfRiz5_95zmAs6WO5FZLYI"
         }
       ],
       "services": {

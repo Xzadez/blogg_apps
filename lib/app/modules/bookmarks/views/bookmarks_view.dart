@@ -1,4 +1,5 @@
 import 'package:blogg_apps/app/data/modals/article.dart';
+import 'package:blogg_apps/app/modules/edit/bindings/edit_binding.dart';
 import 'package:blogg_apps/app/modules/edit/views/edit_view.dart';
 import 'package:blogg_apps/app/modules/widgets/custom_item.dart';
 import 'package:flutter/material.dart';
@@ -13,14 +14,8 @@ import '../controllers/bookmarks_controller.dart';
 class BookmarksView extends GetView<BookmarksController> {
   BookmarksView({super.key});
 
-  final BookmarksController _bookmarksController =
-      Get.put(BookmarksController());
-  final SharedPreferences _prefs = Get.find<SharedPreferences>();
-  final ConnectionController connectionController =
-      Get.find<ConnectionController>();
   @override
   Widget build(BuildContext context) {
-    _bookmarksController.fetchArticlesByAuthor((_prefs.getString('username')!));
     final size = MediaQuery.of(context).size;
     final height = size.height;
     final width = size.width;
@@ -46,27 +41,27 @@ class BookmarksView extends GetView<BookmarksController> {
             ),
             Obx(
               () {
-                if (!connectionController.isOnline.value) {
+                if (!Get.find<ConnectionController>().isOnline.value) {
                   return const Center(
                       child: Padding(
                     padding: EdgeInsets.only(top: 20),
                     child: Text("No Data Available"),
                   ));
                 } else {
-                  if (_bookmarksController.isLoading.value) {
+                  if (controller.isLoading.value) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (_bookmarksController.articles.isEmpty) {
+                  } else if (controller.articles.isEmpty) {
                     return const Center(child: Text("No Data Available"));
                   } else {
                     return ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _bookmarksController.articles.length,
+                      itemCount: controller.articles.length,
                       itemBuilder: (context, index) {
-                        final data = _bookmarksController.articles[index];
+                        final data = controller.articles[index];
                         return GestureDetector(
                           onTap: () async {
-                            final fetchedArticle = await _bookmarksController
+                            final fetchedArticle = await controller
                                 .fetchArticleById(data.articleId);
                             if (fetchedArticle != null) {
                               Get.to(NewsView(fetchedArticle));
@@ -74,20 +69,23 @@ class BookmarksView extends GetView<BookmarksController> {
                           },
                           child: Dismissible(
                             confirmDismiss: (DismissDirection direction) async {
-                              final fetchedArticle = await _bookmarksController
+                              final fetchedArticle = await controller
                                   .fetchArticleById(data.articleId);
                               if (direction == DismissDirection.startToEnd) {
-                                _bookmarksController
-                                    .deleteArticle(data.articleId);
+                                controller.deleteArticle(data.articleId);
                                 Get.snackbar(
                                     'Berhasil', 'Article berhasil dihapus');
                                 print(data.articleId);
                               } else {
-                                print(connectionController.isOnline.value);
-
-                                Get.to(EditView(fetchedArticle!));
+                                if (fetchedArticle != null) {
+                                  Get.to(
+                                    () => EditView(),
+                                    arguments: fetchedArticle,
+                                    binding: EditBinding(),
+                                  );
+                                }
                               }
-                              return null;
+                              return false;
                             },
                             background: Container(
                               color: Colors.red,
@@ -95,8 +93,7 @@ class BookmarksView extends GetView<BookmarksController> {
                             secondaryBackground: Container(
                               color: Colors.green,
                             ),
-                            key: ValueKey<Article>(
-                                _bookmarksController.articles[index]),
+                            key: ValueKey<Article>(controller.articles[index]),
                             child: CustomItem(
                               title: data.title,
                               content: data.header,

@@ -23,20 +23,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -50,20 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDQngA4M2or4H7PLri5JbQQ74SDLVFiddk',
-    appId: '1:1023851529255:web:b6788a8db4562be924ba02',
-    messagingSenderId: '1023851529255',
-    projectId: 'blogg-app-4de16',
-    authDomain: 'blogg-app-4de16.firebaseapp.com',
-    storageBucket: 'blogg-app-4de16.appspot.com',
-    measurementId: 'G-3M805DP49H',
+    apiKey: 'AIzaSyC8doWRx-GFLpienN2JHCY7jDQ2TTt7Elo',
+    appId: '1:801724453027:web:1bd19ccacd3e1f58da2f16',
+    messagingSenderId: '801724453027',
+    projectId: 'blogg-app-e7ed8',
+    authDomain: 'blogg-app-e7ed8.firebaseapp.com',
+    storageBucket: 'blogg-app-e7ed8.firebasestorage.app',
+    measurementId: 'G-NK6KB3E5LH',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDxKPDHy2QTa19WYsqjQq8a0r-oDKwbJ94',
-    appId: '1:1023851529255:android:9044f6030de8b56424ba02',
-    messagingSenderId: '1023851529255',
-    projectId: 'blogg-app-4de16',
-    storageBucket: 'blogg-app-4de16.appspot.com',
+    apiKey: 'AIzaSyBvaOkzakeeVlfRiz5_95zmAs6WO5FZLYI',
+    appId: '1:801724453027:android:3c0f2ff40cfd867cda2f16',
+    messagingSenderId: '801724453027',
+    projectId: 'blogg-app-e7ed8',
+    storageBucket: 'blogg-app-e7ed8.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAApQUx7BAL5Jjh_JtBggUOOpsLD41Nu34',
+    appId: '1:801724453027:ios:be9cfba3fd8ce626da2f16',
+    messagingSenderId: '801724453027',
+    projectId: 'blogg-app-e7ed8',
+    storageBucket: 'blogg-app-e7ed8.firebasestorage.app',
+    iosBundleId: 'com.example.bloggApps',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAApQUx7BAL5Jjh_JtBggUOOpsLD41Nu34',
+    appId: '1:801724453027:ios:be9cfba3fd8ce626da2f16',
+    messagingSenderId: '801724453027',
+    projectId: 'blogg-app-e7ed8',
+    storageBucket: 'blogg-app-e7ed8.firebasestorage.app',
+    iosBundleId: 'com.example.bloggApps',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyC8doWRx-GFLpienN2JHCY7jDQ2TTt7Elo',
+    appId: '1:801724453027:web:063439d5ad8678f1da2f16',
+    messagingSenderId: '801724453027',
+    projectId: 'blogg-app-e7ed8',
+    authDomain: 'blogg-app-e7ed8.firebaseapp.com',
+    storageBucket: 'blogg-app-e7ed8.firebasestorage.app',
+    measurementId: 'G-HXJYSKSEY7',
   );
 }

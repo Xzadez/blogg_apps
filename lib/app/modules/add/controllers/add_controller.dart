@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:blogg_apps/app/data/controller/post_controller.dart';
+import 'package:blogg_apps/app/modules/bookmarks/controllers/bookmarks_controller.dart';
 import 'package:blogg_apps/app/modules/widgets/show_options.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -11,30 +11,41 @@ import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../data/controller/connection.dart';
 import '../../../data/controller/user_controller.dart';
 
 class AddController extends GetxController {
-  final PostController postController = PostController();
+  final PostController postController = Get.find<PostController>();
+  final ConnectionController connectionController =
+      Get.find<ConnectionController>();
+  final SharedPreferences _prefs = Get.find<SharedPreferences>();
+
+  final supabase = Supabase.instance.client;
+
   final TextEditingController headerController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
-  final ConnectionController connectionController =
-      Get.put(ConnectionController());
-  final SharedPreferences _prefs = Get.find<SharedPreferences>();
   final dateFormatter = DateFormat('yyyy-MM-dd');
   final ImagePicker _picker = ImagePicker();
 
   Rx<XFile?> selectedImage = Rx<XFile?>(null);
   Rx<XFile?> selectedVideo = Rx<XFile?>(null);
   VideoPlayerController? videoPlayerController;
-  bool isSyncing = false; // Flag untuk mencegah sync dobel
+  bool isSyncing = false;
 
   final box = GetStorage();
   var isVideoPlaying = false.obs;
 
   var selectedVideoPath = ''.obs;
+
+  void _refreshLists() {
+    postController.fetchAllArticles();
+    try {
+      Get.find<BookmarksController>().fetchArticlesByAuthor();
+    } catch (e) {}
+  }
 
   @override
   void onInit() {
@@ -42,7 +53,7 @@ class AddController extends GetxController {
     _loadStoredData();
     ever(connectionController.isOnline, (bool isOnline) {
       if (isOnline) {
-        syncOfflinePosts(); // Jalankan hanya saat koneksi online
+        syncOfflinePosts();
       }
     });
   }
@@ -141,61 +152,50 @@ class AddController extends GetxController {
   }
 
   Future<void> savedArticles(String title, String tag) async {
-    var imageName = DateTime.now().millisecondsSinceEpoch.toString();
-    var storageRef =
-        FirebaseStorage.instance.ref().child('contentImg/$imageName.jpg');
+    if (selectedImage.value == null) {
+      Get.snackbar('Error', 'Silakan pilih sebuah gambar.');
+      return;
+    }
 
-    final DateTime now = DateTime.now();
-    String date = dateFormatter.format(now);
+    // Tampilkan dialog loading
+    Get.dialog(const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false);
 
-    Map<String, dynamic> postData = {
-      "username": _prefs.getString('username'),
-      "title": title,
-      "tag": tag,
-      "header": headerController.text,
-      "content": contentController.text,
-      "date": date,
-      "imagePath": selectedImage.value?.path,
-    };
+    try {
+      final imageFile = File(selectedImage.value!.path);
+      final imageName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      const bucketName = 'imgContent';
 
-    if (connectionController.isOnline.value) {
-      try {
-        var uploadTask = storageRef.putFile(File(selectedImage.value!.path));
-        var downloadUrl = await (await uploadTask).ref.getDownloadURL();
+      await supabase.storage.from(bucketName).upload(
+            imageName,
+            imageFile,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+          );
 
-        postController.addPost(
-          postData["username"],
-          postData["title"],
-          postData["tag"],
-          postData["header"],
-          postData["content"],
-          postData["date"],
-          downloadUrl,
-        );
+      final String downloadUrl =
+          supabase.storage.from(bucketName).getPublicUrl(imageName);
+      await postController.addPost(
+        (_prefs.getString('username') ?? 'unknown')
+            .trim()
+            .toLowerCase(), // Simpan author yang bersih
+        title, tag,
+        headerController.text, contentController.text,
+        dateFormatter.format(DateTime.now()),
+        downloadUrl,
+      );
 
-        Get.snackbar('Success', 'Berhasil menambahkan gambar');
-      } catch (e) {
-        Get.snackbar("Error", "Gagal mengunggah data ke Firebase: $e");
-      }
-    } else {
-      // Save to SharedPreferences
-      try {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        List<String> pendingPosts = prefs.getStringList('pendingPosts') ?? [];
-        pendingPosts.add(jsonEncode(postData));
-        await prefs.setStringList('pendingPosts', pendingPosts);
-
-        Get.snackbar('Offline Mode', 'Data disimpan sementara');
-        await Future.delayed(Duration(seconds: 4));
-        Get.offNamed('home');
-      } catch (e) {
-        Get.snackbar("Error", "Gagal menyimpan data secara lokal: $e");
-      }
+      Get.back();
+      _refreshLists();
+      Get.snackbar('Success', 'Artikel berhasil ditambahkan');
+      Get.offNamed('home');
+    } catch (e) {
+      Get.back();
+      Get.snackbar("Error", "Gagal menyimpan artikel: ${e.toString()}");
     }
   }
 
   Future<void> syncOfflinePosts() async {
-    if (isSyncing) return; // Cegah eksekusi paralel
+    if (isSyncing) return;
     isSyncing = true;
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -206,14 +206,20 @@ class AddController extends GetxController {
       for (String postDataString in pendingPosts) {
         try {
           Map<String, dynamic> postData = jsonDecode(postDataString);
-          String imagePath = postData["imagePath"];
-          String imageName = DateTime.now().millisecondsSinceEpoch.toString();
-          var storageRef =
-              FirebaseStorage.instance.ref().child('contentImg/$imageName.jpg');
+          final imagePath = postData["imagePath"];
+          final imageFile = File(imagePath);
+          final imageName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+          const bucketName = 'imgContent';
 
-          // Upload image
-          var uploadTask = storageRef.putFile(File(imagePath));
-          var downloadUrl = await (await uploadTask).ref.getDownloadURL();
+          await supabase.storage.from(bucketName).upload(
+                imageName,
+                imageFile,
+                fileOptions:
+                    const FileOptions(cacheControl: '3600', upsert: false),
+              );
+
+          final String downloadUrl =
+              supabase.storage.from(bucketName).getPublicUrl(imageName);
 
           // Add post to Firebase
           postController.addPost(

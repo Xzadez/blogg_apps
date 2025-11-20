@@ -114,6 +114,20 @@ class SignUpView extends GetView<SignUpController> {
                     onPressed: signUpController.authController.isLoading.value
                         ? () {}
                         : () {
+                            final password =
+                                signUpController.passwordController.text;
+                            final repeatPassword =
+                                signUpController.repeatPassController.text;
+
+                            if (password != repeatPassword) {
+                              Get.snackbar(
+                                'Error',
+                                'Password tidak cocok, silakan periksa kembali.',
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white,
+                              );
+                              return;
+                            }
                             signUpController.authController.registerUser(
                               signUpController.emailController.text,
                               signUpController.passwordController.text,
@@ -127,8 +141,8 @@ class SignUpView extends GetView<SignUpController> {
                             style: TextStyle(
                               color: Colors.white,
                               fontFamily: 'Telegraf',
-                              fontSize: 16, // Text size
-                              fontWeight: FontWeight.bold, // Text weight
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                   );
